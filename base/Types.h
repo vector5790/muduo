@@ -1,6 +1,3 @@
-#ifndef MUDUO_BASE_TYPES_H
-#define MUDUO_BASE_TYPES_H
-
 #include <stdint.h>
 #include <string.h>  // memset
 #include <string>
@@ -48,7 +45,7 @@ inline To implicit_cast(From const &f){
 //    if (dynamic_cast<Subclass2>(foo)) HandleASubclass2Object(foo);
 // You should design the code some other way not to need this.
 template<typename To,typename From>
-inline To down_cast(From const *f){// so we only accept pointers
+inline To down_cast(From *f){// so we only accept pointers
     /*
     down_cast在debug模式下内部使用了dynamic_cast进行验证，在release下使用static_cast替换dynamic_cast。
     为什么使用down_cast而不直接使用dynamic_cast?
@@ -62,5 +59,3 @@ inline To down_cast(From const *f){// so we only accept pointers
 }
 
 }
-
-#endif
