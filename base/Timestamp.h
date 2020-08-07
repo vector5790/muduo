@@ -1,11 +1,9 @@
 /*
 UTC 时间戳
 */
-#ifndef MUDUO_BASE_TIMESTAMP_H
-#define MUDUO_BASE_TIMESTAMP_H
 
-#include "muduo/base/copyable.h"
-#include "muduo/base/Types.h"
+#include "copyable.h"
+#include "Types.h"
 
 #include <boost/operators.hpp>
 
@@ -60,11 +58,11 @@ private:
     int64_t microSecondsSinceEpoch_;//表示到1970-01-01 00:00:00 UTC的微秒数
 };
 
-inline bool operators <(Timestamp lhs,Timestamp rhs){
+inline bool operator <(Timestamp lhs,Timestamp rhs){
     return lhs.microSecondsSinceEpoch()<rhs.microSecondsSinceEpoch();
 }
 
-inline bool operators ==(Timestamp lhs,Timestamp rhs){
+inline bool operator ==(Timestamp lhs,Timestamp rhs){
     return lhs.microSecondsSinceEpoch()==rhs.microSecondsSinceEpoch();
 }
 inline double timeDifference(Timestamp hign,Timestamp low){
@@ -86,5 +84,3 @@ inline Timestamp addTime(Timestamp timestamp,double seconds){
 }
 
 }
-
-#endif
