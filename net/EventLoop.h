@@ -27,11 +27,16 @@ class TimerQueue;
 
 class EventLoop : noncopyable{
 public:
+    typedef boost::function<void()> Functor;
     EventLoop();
     ~EventLoop();
 
     void loop();
     void quit();
+
+    void runInLoop(const Functor& cb);
+    void queueInLoop(const Functor& cb);
+
      ///
     /// Time when poll returns, usually means data arrivial.
     ///
@@ -50,7 +55,8 @@ public:
     /// Runs callback every @c interval seconds.
     ///
     TimerId runEvery(double interval, const TimerCallback& cb);
-
+    
+    void wakeup();
     void updateChannel(Channel* channel);
 
     void assertInLoopThread(){
@@ -67,16 +73,27 @@ public:
     static EventLoop* getEventLoopOfCurrentThread();
 private:
     void abortNotInLoopThread();
+    void handleRead();//waked up
+    void doPendingFunctors();
 
     typedef std::vector<Channel*> ChannelList;
 
     bool looping_;
     bool quit_;
+    bool callingPendingFunctors_;
     const pid_t threadId_;
     Timestamp pollReturnTime_;
     boost::scoped_ptr<Poller>poller_;
     boost::scoped_ptr<TimerQueue> timerQueue_;
+    int wakeupFd_;
+    /*
+    用于处理wakeupFd_上的readable事件，将事件分发至handleRead()函数。其中只有pendingFunctors_暴露给其他线程，
+    因此用mutex保护
+    */
+    boost::scoped_ptr<Channel> wakeupChannel_;
     ChannelList activeChannels_;
+    MutexLock mutex_;
+    std::vector<Functor> pendingFunctors_; // @GuardedBy mutex_
 };
 
 }//net

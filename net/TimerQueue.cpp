@@ -127,12 +127,16 @@ TimerQueue::~TimerQueue(){
  */
 TimerId TimerQueue::addTimer(const TimerCallback& cb,Timestamp when,double interval){
     Timer* timer=new Timer(std::move(cb),when,interval);
+    loop_->runInLoop(boost::bind(&TimerQueue::addTimerInLoop,this,timer));
+    return TimerId(timer);
+}
+//完成修改定时器列表的工作
+void TimerQueue::addTimerInLoop(Timer* timer){
     loop_->assertInLoopThread();
     bool earliestChanged=insert(timer);
     if(earliestChanged){
         resetTimerfd(timerfd_,timer->expiration());
     }
-    return TimerId(timer);
 }
 /*
 当定时器超时，保存timerfd的Channel激活，调用回调函数

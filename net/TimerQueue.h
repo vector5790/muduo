@@ -32,8 +32,14 @@ public:
 private:
     typedef std::pair<Timestamp, Timer*> Entry;
     typedef std::set<Entry> TimerList;
-
+    void addTimerInLoop(Timer* timer);
+    /*
+    当定时器超时，保存timerfd的Channel激活，调用回调函数
+    */
     void handleRead();
+    /*
+    从timers_中移除已到期的Timer，并通过vector返回他们
+    */
     std::vector<Entry>getExpired(Timestamp now);
      /* 将超时任务中周期性的任务重新添加到timers_中 */
     void reset(const std::vector<Entry>& expired,Timestamp now);
