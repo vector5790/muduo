@@ -19,12 +19,12 @@ class EventLoop;
 class Channel : noncopyable{
 public:
     typedef std::function<void()> EventCallback;
-    //typedef std::function<void(Timestamp)> ReadEventCallback;
+    typedef std::function<void(Timestamp)> ReadEventCallback;
 
     Channel(EventLoop* loop,int fd);
-
-    void handleEvent();
-    void setReadCallback(EventCallback cb){
+    ~Channel();
+    void handleEvent(Timestamp receiveTime);
+    void setReadCallback(ReadEventCallback cb){
         readCallback_=std::move(cb);
     }
     void setWriteCallback(EventCallback cb){
@@ -33,6 +33,8 @@ public:
     void setErrorCallback(EventCallback cb){
         errorCallback_=std::move(cb);
     }
+    void setCloseCallback(const EventCallback& cb)
+    { closeCallback_ = cb; }
 
     int fd() const { return fd_; }
     int events() const { return events_; }
@@ -40,7 +42,7 @@ public:
     bool isNoneEvent() const { return events_ == kNoneEvent; }
 
     void enableReading() { events_|=kReadEvent; update(); }
-
+    void disableAll() { events_ = kNoneEvent; update(); }
     //for Poller
     int index() { return index_; }
     void set_index(int idx) { index_=idx; }
@@ -58,9 +60,12 @@ private:
     int revents_;//目前活动的事件，由Poller设置
     int index_;
 
-    EventCallback readCallback_;
+    bool eventHandling_;
+
+    ReadEventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
+    EventCallback closeCallback_;
 };
 }//net
 }//muduo

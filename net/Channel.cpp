@@ -17,8 +17,14 @@ Channel::Channel(EventLoop* loop,int fdArg)
     fd_(fdArg),
     events_(0),
     revents_(0),
-    index_(-1)
+    index_(-1),
+    eventHandling_(false)
 {
+}
+Channel::~Channel()
+{
+    //断言在事件处理期间本Channel对象不会析构
+    assert(!eventHandling_);
 }
 /*
 Channel::update() 会调用EventLoop::updateChannel(),后者转而调用Poller::updateChannel()
@@ -30,18 +36,25 @@ void Channel::update()
 /*
 是Channel的核心，它由EventLoop::loop()调用，它的功能是根据revents_的值分别调用不同的用户回调
 */
-void Channel::handleEvent(){
+void Channel::handleEvent(Timestamp receiveTime){
+    eventHandling_=true;
     if (revents_ & POLLNVAL) {
         LOG_WARN << "Channel::handle_event() POLLNVAL";
+    }
+
+    if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
+        LOG_WARN << "Channel::handle_event() POLLHUP";
+        if (closeCallback_) closeCallback_();
     }
 
     if (revents_ & (POLLERR | POLLNVAL)) {
         if (errorCallback_) errorCallback_();
     }
     if (revents_ & (POLLIN | POLLPRI | POLLRDHUP)) {
-        if (readCallback_) readCallback_();
+        if (readCallback_) readCallback_(receiveTime);
     }
     if (revents_ & POLLOUT) {
         if (writeCallback_) writeCallback_();
     }
+    eventHandling_=false;
 }
